@@ -285,6 +285,5 @@ export default function AdminMenuPage() {
           ))
         )}
       </div>
-    </div>
   )
 }
