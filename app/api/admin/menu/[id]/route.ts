@@ -14,15 +14,13 @@ export async function PATCH(
   const body = await request.json()
   const supabase = getSupabaseAdmin()
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('menu_items')
     .update(body)
     .eq('id', id)
-    .select()
-    .single()
 
   if (error) return Response.json({ error: error.message }, { status: 500 })
-  return Response.json(data)
+  return Response.json({ ok: true })
 }
 
 export async function DELETE(
