@@ -258,7 +258,7 @@ export default function POSPage() {
                 {cart.map(item => (
                   <div key={item.cartKey} className="flex items-center gap-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-stone-800 truncate">{item.name}</p>
+                      <p className="text-sm font-medium text-stone-800 leading-snug">{item.name}</p>
                       <p className="text-xs text-stone-400">NT$ {item.price}</p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
