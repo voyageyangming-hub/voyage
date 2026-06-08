@@ -131,12 +131,23 @@ export default function AdminPage() {
     if (authed) fetchBookings()
   }, [authed, fetchBookings])
 
+  // 自動從 sessionStorage 讀取已儲存的密碼
+  useEffect(() => {
+    const saved = sessionStorage.getItem('adminPwd')
+    if (saved) {
+      setPassword(saved)
+      fetch('/api/admin/bookings', { headers: { 'x-admin-password': saved } })
+        .then(res => { if (res.ok) setAuthed(true) })
+    }
+  }, [])
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     const res = await fetch('/api/admin/bookings', {
       headers: { 'x-admin-password': password },
     })
     if (res.ok) {
+      sessionStorage.setItem('adminPwd', password)
       setAuthed(true)
     } else {
       setLoginError('密碼錯誤')

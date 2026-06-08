@@ -88,12 +88,23 @@ export default function AdminOrdersPage() {
 
   useEffect(() => { if (authed) fetchOrders(dateFilter) }, [authed, dateFilter, fetchOrders])
 
+  // 自動從 sessionStorage 讀取已儲存的密碼
+  useEffect(() => {
+    const saved = sessionStorage.getItem('adminPwd')
+    if (saved) {
+      setPassword(saved)
+      fetch(`/api/admin/orders?date=${dateFilter}`, { headers: { 'x-admin-password': saved } })
+        .then(res => { if (res.ok) { setAuthed(true); res.json().then(setOrders) } })
+    }
+  }, [])  // eslint-disable-line react-hooks/exhaustive-deps
+
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     const res = await fetch(`/api/admin/orders?date=${dateFilter}`, {
       headers: { 'x-admin-password': password },
     })
     if (res.ok) {
+      sessionStorage.setItem('adminPwd', password)
       setAuthed(true)
       setOrders(await res.json())
     } else {
