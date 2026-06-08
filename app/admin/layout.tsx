@@ -1,11 +1,9 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-
-const AdminPwdContext = createContext('')
-export const useAdminPwd = () => useContext(AdminPwdContext)
+import { AdminPwdContext } from './admin-context'
 
 const NAV_LINKS = [
   { href: '/admin', label: '預約管理' },

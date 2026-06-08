@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useAdminPwd } from './layout'
+import { useAdminPwd } from './admin-context'
 
 type Booking = {
   id: string
