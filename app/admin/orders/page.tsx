@@ -50,12 +50,32 @@ function getTaipeiToday() {
 export default function AdminOrdersPage() {
   const [password, setPassword] = useState('')
   const [orders, setOrders] = useState<Order[]>([])
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
   useEffect(() => {
     setPassword(sessionStorage.getItem('adminPwd') || '')
   }, [])
   const [dateFilter, setDateFilter] = useState(getTaipeiToday())
   const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  async function deleteOrder(id: string) {
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/admin/orders/${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-password': password },
+      })
+      if (res.ok) {
+        setOrders(prev => prev.filter(o => o.id !== id))
+        setDeleteConfirm(null)
+      } else {
+        alert('刪除失敗')
+      }
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const fetchOrders = useCallback(async (date: string) => {
     const res = await fetch(`/api/admin/orders?date=${date}`, {
@@ -162,6 +182,32 @@ export default function AdminOrdersPage() {
                               <span>NT$ {order.change_amount ?? 0}</span>
                             </div>
                           </>
+                        )}
+                      </div>
+                      <div className="border-t border-stone-100 pt-3 flex justify-end">
+                        {deleteConfirm === order.id ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => deleteOrder(order.id)}
+                              disabled={deletingId === order.id}
+                              className="text-xs px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-stone-300"
+                            >
+                              {deletingId === order.id ? '刪除中…' : '確認刪除'}
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirm(null)}
+                              className="text-xs px-3 py-1.5 border border-stone-200 rounded-lg text-stone-500 hover:bg-stone-50"
+                            >
+                              取消
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setDeleteConfirm(order.id)}
+                            className="text-xs px-3 py-1.5 border border-red-200 text-red-500 rounded-lg hover:bg-red-50"
+                          >
+                            刪除訂單
+                          </button>
                         )}
                       </div>
                     </div>
