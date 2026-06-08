@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useAdminPwd } from '../layout'
 
 type OrderItem = {
   id: string
@@ -28,30 +29,6 @@ const PAYMENT_LABEL: Record<string, string> = {
   jkopay: '🔵 街口支付',
 }
 
-function AdminNav() {
-  return (
-    <nav className="flex gap-1 px-4 py-2 bg-stone-100 border-b border-stone-200 overflow-x-auto shrink-0">
-      {[
-        { href: '/admin', label: '預約管理' },
-        { href: '/admin/menu', label: '菜單 & 庫存' },
-        { href: '/admin/orders', label: '訂單記錄' },
-        { href: '/pos', label: '🖥️ POS 點餐' },
-      ].map(link => (
-        <a
-          key={link.href}
-          href={link.href}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-            link.href === '/admin/orders'
-              ? 'bg-amber-700 text-white'
-              : 'text-stone-600 hover:bg-stone-200'
-          }`}
-        >
-          {link.label}
-        </a>
-      ))}
-    </nav>
-  )
-}
 
 function toTaipeiDateStr(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('zh-TW', {
@@ -72,9 +49,7 @@ function getTaipeiToday() {
 }
 
 export default function AdminOrdersPage() {
-  const [password, setPassword] = useState('')
-  const [authed, setAuthed] = useState(false)
-  const [loginError, setLoginError] = useState('')
+  const password = useAdminPwd()
   const [orders, setOrders] = useState<Order[]>([])
   const [dateFilter, setDateFilter] = useState(getTaipeiToday())
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -86,52 +61,7 @@ export default function AdminOrdersPage() {
     if (res.ok) setOrders(await res.json())
   }, [password])
 
-  useEffect(() => { if (authed) fetchOrders(dateFilter) }, [authed, dateFilter, fetchOrders])
-
-  // 自動從 sessionStorage 讀取已儲存的密碼
-  useEffect(() => {
-    const saved = sessionStorage.getItem('adminPwd')
-    if (saved) {
-      setPassword(saved)
-      fetch(`/api/admin/orders?date=${dateFilter}`, { headers: { 'x-admin-password': saved } })
-        .then(res => { if (res.ok) { setAuthed(true); res.json().then(setOrders) } })
-    }
-  }, [])  // eslint-disable-line react-hooks/exhaustive-deps
-
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
-    const res = await fetch(`/api/admin/orders?date=${dateFilter}`, {
-      headers: { 'x-admin-password': password },
-    })
-    if (res.ok) {
-      sessionStorage.setItem('adminPwd', password)
-      setAuthed(true)
-      setOrders(await res.json())
-    } else {
-      setLoginError('密碼錯誤')
-    }
-  }
-
-  if (!authed) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-stone-50">
-        <form onSubmit={handleLogin} className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8 w-full max-w-sm">
-          <h1 className="text-xl font-semibold text-stone-800 mb-6 text-center">管理後台</h1>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="請輸入管理密碼"
-            className="w-full border border-stone-300 rounded-lg px-3 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
-          />
-          {loginError && <p className="text-red-600 text-sm mb-3">{loginError}</p>}
-          <button type="submit" className="w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-2.5 rounded-lg">
-            登入
-          </button>
-        </form>
-      </main>
-    )
-  }
+  useEffect(() => { if (password) fetchOrders(dateFilter) }, [password, dateFilter, fetchOrders])
 
   const completed = orders.filter(o => o.status === 'completed')
   const dailyTotal = completed.reduce((sum, o) => sum + o.total_price, 0)
@@ -140,17 +70,7 @@ export default function AdminOrdersPage() {
   const countByJko = completed.filter(o => o.payment_method === 'jkopay').length
 
   return (
-    <main className="min-h-screen bg-stone-50">
-      <header className="bg-white border-b border-stone-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <h1 className="text-lg font-semibold text-stone-800">Voyage 陽明山 管理後台</h1>
-          <p className="text-xs text-stone-400">POS 訂單記錄</p>
-        </div>
-      </header>
-
-      <AdminNav />
-
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
 
         {/* 日期篩選 */}
         <div className="bg-white rounded-2xl border border-stone-200 shadow-sm px-5 py-4 flex items-center gap-4">
@@ -249,6 +169,6 @@ export default function AdminOrdersPage() {
           </div>
         )}
       </div>
-    </main>
+    </div>
   )
 }

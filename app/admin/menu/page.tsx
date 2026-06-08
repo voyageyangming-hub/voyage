@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useAdminPwd } from '../layout'
 
 type MenuItem = {
   id: string
@@ -15,35 +16,8 @@ type MenuItem = {
 
 const EMPTY_FORM = { name: '', category: '', price: '', stock_qty: '', low_stock_alert: '5', sort_order: '0' }
 
-function AdminNav() {
-  return (
-    <nav className="flex gap-1 px-4 py-2 bg-stone-100 border-b border-stone-200 overflow-x-auto shrink-0">
-      {[
-        { href: '/admin', label: '預約管理' },
-        { href: '/admin/menu', label: '菜單 & 庫存' },
-        { href: '/admin/orders', label: '訂單記錄' },
-        { href: '/pos', label: '🖥️ POS 點餐' },
-      ].map(link => (
-        <a
-          key={link.href}
-          href={link.href}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-            link.href === '/admin/menu'
-              ? 'bg-amber-700 text-white'
-              : 'text-stone-600 hover:bg-stone-200'
-          }`}
-        >
-          {link.label}
-        </a>
-      ))}
-    </nav>
-  )
-}
-
 export default function AdminMenuPage() {
-  const [password, setPassword] = useState('')
-  const [authed, setAuthed] = useState(false)
-  const [loginError, setLoginError] = useState('')
+  const password = useAdminPwd()
   const [items, setItems] = useState<MenuItem[]>([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -57,29 +31,7 @@ export default function AdminMenuPage() {
     if (res.ok) setItems(await res.json())
   }, [password])
 
-  useEffect(() => { if (authed) fetchItems() }, [authed, fetchItems])
-
-  // 自動從 sessionStorage 讀取已儲存的密碼
-  useEffect(() => {
-    const saved = sessionStorage.getItem('adminPwd')
-    if (saved) {
-      setPassword(saved)
-      fetch('/api/admin/menu', { headers: { 'x-admin-password': saved } })
-        .then(res => { if (res.ok) { setAuthed(true); res.json().then(setItems) } })
-    }
-  }, [])
-
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
-    const res = await fetch('/api/admin/menu', { headers: { 'x-admin-password': password } })
-    if (res.ok) {
-      sessionStorage.setItem('adminPwd', password)
-      setAuthed(true)
-      setItems(await res.json())
-    } else {
-      setLoginError('密碼錯誤')
-    }
-  }
+  useEffect(() => { if (password) fetchItems() }, [password, fetchItems])
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault()
@@ -142,41 +94,10 @@ export default function AdminMenuPage() {
     else alert('刪除失敗')
   }
 
-  if (!authed) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-stone-50">
-        <form onSubmit={handleLogin} className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8 w-full max-w-sm">
-          <h1 className="text-xl font-semibold text-stone-800 mb-6 text-center">管理後台</h1>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="請輸入管理密碼"
-            className="w-full border border-stone-300 rounded-lg px-3 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
-          />
-          {loginError && <p className="text-red-600 text-sm mb-3">{loginError}</p>}
-          <button type="submit" className="w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-2.5 rounded-lg">
-            登入
-          </button>
-        </form>
-      </main>
-    )
-  }
-
   const categories = Array.from(new Set(items.map(i => i.category)))
 
   return (
-    <main className="min-h-screen bg-stone-50">
-      <header className="bg-white border-b border-stone-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <h1 className="text-lg font-semibold text-stone-800">Voyage 陽明山 管理後台</h1>
-          <p className="text-xs text-stone-400">菜單與庫存管理</p>
-        </div>
-      </header>
-
-      <AdminNav />
-
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
 
         {/* 新增品項 */}
         <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
@@ -361,6 +282,6 @@ export default function AdminMenuPage() {
           ))
         )}
       </div>
-    </main>
+    </div>
   )
 }
