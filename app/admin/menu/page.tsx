@@ -10,10 +10,11 @@ type MenuItem = {
   stock_qty: number
   low_stock_alert: number
   is_available: boolean
+  has_temperature: boolean
   sort_order: number
 }
 
-const EMPTY_FORM = { name: '', category: '', price: '', stock_qty: '', low_stock_alert: '5', sort_order: '0' }
+const EMPTY_FORM = { name: '', category: '', price: '', stock_qty: '', low_stock_alert: '5', sort_order: '0', has_temperature: false }
 
 export default function AdminMenuPage() {
   const [password, setPassword] = useState('')
@@ -50,6 +51,7 @@ export default function AdminMenuPage() {
           stock_qty: form.stock_qty === '' ? -1 : parseInt(form.stock_qty),
           low_stock_alert: parseInt(form.low_stock_alert) || 5,
           sort_order: parseInt(form.sort_order) || 0,
+          has_temperature: form.has_temperature,
         }),
       })
       if (res.ok) {
@@ -153,6 +155,14 @@ export default function AdminMenuPage() {
                   <input type="number" value={form.sort_order} onChange={e => setForm(f => ({ ...f, sort_order: e.target.value }))}
                     className="w-full border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400" />
                 </div>
+                <div className="flex items-center gap-2 col-span-2">
+                  <input type="checkbox" id="has_temp" checked={!!form.has_temperature}
+                    onChange={e => setForm(f => ({ ...f, has_temperature: e.target.checked }))}
+                    className="w-4 h-4 accent-amber-700" />
+                  <label htmlFor="has_temp" className="text-xs font-medium text-stone-600 cursor-pointer">
+                    可選溫度（熱 / 冰）
+                  </label>
+                </div>
               </div>
               <div className="flex gap-2 justify-end">
                 <button type="button" onClick={() => setShowAddForm(false)}
@@ -241,7 +251,22 @@ export default function AdminMenuPage() {
                             </p>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                            {/* 熱/冰 toggle */}
+                            <button
+                              onClick={() => fetch(`/api/admin/menu/${item.id}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
+                                body: JSON.stringify({ has_temperature: !item.has_temperature }),
+                              }).then(() => fetchItems())}
+                              className={`text-xs px-3 py-1.5 rounded-lg font-medium border transition-colors ${
+                                item.has_temperature
+                                  ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                                  : 'bg-stone-100 text-stone-400 border-stone-200 hover:bg-stone-200'
+                              }`}
+                            >
+                              {item.has_temperature ? '☕ 熱/冰' : '熱/冰 off'}
+                            </button>
                             {/* 上架/下架 toggle */}
                             <button
                               onClick={() => toggleAvailable(item)}

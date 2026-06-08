@@ -10,13 +10,16 @@ type MenuItem = {
   stock_qty: number
   low_stock_alert: number
   is_available: boolean
+  has_temperature: boolean
 }
 
 type CartItem = {
+  cartKey: string    // `${id}-熱` / `${id}-冰` / `${id}`
   id: string
   name: string
   price: number
   quantity: number
+  temperature?: '熱' | '冰'
 }
 
 type PaymentMethod = 'cash' | 'linepay' | 'jkopay'
@@ -39,6 +42,7 @@ export default function POSPage() {
   const [amountPaid, setAmountPaid] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
+  const [tempSelect, setTempSelect] = useState<MenuItem | null>(null)
 
   function loadMenu() {
     fetch('/api/menu').then(r => r.json()).then(setItems).catch(() => {})
@@ -55,17 +59,27 @@ export default function POSPage() {
   const paid = parseInt(amountPaid) || 0
   const change = paymentMethod === 'cash' ? paid - total : 0
 
-  function addToCart(item: MenuItem) {
+  function addToCart(item: MenuItem, temperature?: '熱' | '冰') {
+    const cartKey = item.has_temperature && temperature ? `${item.id}-${temperature}` : item.id
+    const displayName = temperature ? `${item.name}（${temperature}）` : item.name
     setCart(prev => {
-      const existing = prev.find(c => c.id === item.id)
-      if (existing) return prev.map(c => c.id === item.id ? { ...c, quantity: c.quantity + 1 } : c)
-      return [...prev, { id: item.id, name: item.name, price: item.price, quantity: 1 }]
+      const existing = prev.find(c => c.cartKey === cartKey)
+      if (existing) return prev.map(c => c.cartKey === cartKey ? { ...c, quantity: c.quantity + 1 } : c)
+      return [...prev, { cartKey, id: item.id, name: displayName, price: item.price, quantity: 1, temperature }]
     })
   }
 
-  function updateQty(id: string, delta: number) {
+  function handleItemClick(item: MenuItem) {
+    if (item.has_temperature) {
+      setTempSelect(item)
+    } else {
+      addToCart(item)
+    }
+  }
+
+  function updateQty(cartKey: string, delta: number) {
     setCart(prev =>
-      prev.map(c => c.id === id ? { ...c, quantity: c.quantity + delta } : c).filter(c => c.quantity > 0)
+      prev.map(c => c.cartKey === cartKey ? { ...c, quantity: c.quantity + delta } : c).filter(c => c.quantity > 0)
     )
   }
 
@@ -102,6 +116,7 @@ export default function POSPage() {
             quantity: c.quantity,
             unit_price: c.price,
             subtotal: c.price * c.quantity,
+            temperature: c.temperature ?? null,
           })),
         }),
       })
@@ -128,6 +143,11 @@ export default function POSPage() {
     !!paymentMethod &&
     (paymentMethod !== 'cash' || (!!amountPaid && paid >= total))
 
+  // 計算每個 menu item 在購物車的總數量（跨溫度）
+  function cartQtyForItem(itemId: string) {
+    return cart.filter(c => c.id === itemId).reduce((sum, c) => sum + c.quantity, 0)
+  }
+
   return (
     <div className="h-screen flex flex-col bg-stone-100 overflow-hidden">
       {/* Header */}
@@ -142,12 +162,7 @@ export default function POSPage() {
               ✅ 結帳完成 {successMsg}
             </span>
           )}
-          <a
-            href="/admin"
-            className="text-[#f5e6d8] text-xs hover:text-white underline"
-          >
-            後台
-          </a>
+          <a href="/admin" className="text-[#f5e6d8] text-xs hover:text-white underline">後台</a>
         </div>
       </header>
 
@@ -183,7 +198,7 @@ export default function POSPage() {
             ) : (
               <div className="grid grid-cols-3 gap-3">
                 {visibleItems.map(item => {
-                  const cartQty = cart.find(c => c.id === item.id)?.quantity ?? 0
+                  const qty = cartQtyForItem(item.id)
                   const soldOut = item.stock_qty === 0
                   const lowStock = item.stock_qty > 0 && item.stock_qty <= item.low_stock_alert
 
@@ -191,19 +206,22 @@ export default function POSPage() {
                     <button
                       key={item.id}
                       disabled={soldOut}
-                      onClick={() => addToCart(item)}
+                      onClick={() => handleItemClick(item)}
                       className={`relative bg-white rounded-2xl p-4 text-left shadow-sm border transition-all active:scale-95 select-none ${
                         soldOut
                           ? 'opacity-50 cursor-not-allowed border-stone-200'
-                          : cartQty > 0
+                          : qty > 0
                           ? 'border-[#7c5c44] ring-2 ring-[#7c5c44]/20'
                           : 'border-stone-200 hover:border-[#7c5c44]/50 hover:shadow-md'
                       }`}
                     >
-                      {cartQty > 0 && (
+                      {qty > 0 && (
                         <span className="absolute top-2 right-2 bg-[#7c5c44] text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">
-                          {cartQty}
+                          {qty}
                         </span>
+                      )}
+                      {item.has_temperature && (
+                        <span className="absolute top-2 left-2 text-[10px] text-stone-400">熱/冰</span>
                       )}
                       <p className="font-medium text-stone-800 text-sm leading-snug mb-2 pr-6">{item.name}</p>
                       <p className="text-[#7c5c44] font-bold text-xl">NT$ {item.price}</p>
@@ -238,19 +256,19 @@ export default function POSPage() {
             ) : (
               <div className="space-y-3">
                 {cart.map(item => (
-                  <div key={item.id} className="flex items-center gap-2">
+                  <div key={item.cartKey} className="flex items-center gap-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-stone-800 truncate">{item.name}</p>
                       <p className="text-xs text-stone-400">NT$ {item.price}</p>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <button
-                        onClick={() => updateQty(item.id, -1)}
+                        onClick={() => updateQty(item.cartKey, -1)}
                         className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold flex items-center justify-center text-base"
                       >−</button>
                       <span className="w-5 text-center font-semibold text-sm">{item.quantity}</span>
                       <button
-                        onClick={() => updateQty(item.id, 1)}
+                        onClick={() => updateQty(item.cartKey, 1)}
                         className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold flex items-center justify-center text-base"
                       >+</button>
                     </div>
@@ -289,12 +307,43 @@ export default function POSPage() {
         </div>
       </div>
 
+      {/* ── 溫度選擇 Modal ── */}
+      {tempSelect && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-xs shadow-2xl overflow-hidden">
+            <div className="bg-[#5c4232] px-6 py-4">
+              <h2 className="text-white font-semibold text-lg">{tempSelect.name}</h2>
+              <p className="text-[#f5e6d8] text-sm">請選擇溫度</p>
+            </div>
+            <div className="p-5 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                {(['熱', '冰'] as const).map(temp => (
+                  <button
+                    key={temp}
+                    onClick={() => { addToCart(tempSelect, temp); setTempSelect(null) }}
+                    className="py-6 rounded-2xl border-2 border-stone-200 hover:border-[#7c5c44] hover:bg-[#fdf6f0] text-2xl font-bold text-stone-700 flex flex-col items-center gap-1 transition-all active:scale-95"
+                  >
+                    <span>{temp === '熱' ? '☕' : '🧊'}</span>
+                    <span className="text-lg">{temp}</span>
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setTempSelect(null)}
+                className="w-full py-2.5 rounded-xl border border-stone-200 text-stone-500 text-sm hover:bg-stone-50"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── 結帳 Modal ── */}
       {checkoutOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
 
-            {/* Modal header */}
             <div className="bg-[#5c4232] px-6 py-4">
               <h2 className="text-white font-semibold text-lg">結帳</h2>
               {note && <p className="text-[#f5e6d8] text-sm mt-0.5">{note}</p>}
@@ -305,7 +354,7 @@ export default function POSPage() {
               {/* 訂單摘要 */}
               <div className="bg-stone-50 rounded-xl p-4 space-y-1.5">
                 {cart.map(item => (
-                  <div key={item.id} className="flex justify-between text-sm text-stone-600">
+                  <div key={item.cartKey} className="flex justify-between text-sm text-stone-600">
                     <span>{item.name} × {item.quantity}</span>
                     <span>NT$ {item.price * item.quantity}</span>
                   </div>
@@ -366,7 +415,6 @@ export default function POSPage() {
                       </button>
                     ))}
                   </div>
-
                   {paid >= total && paid > 0 && (
                     <div className={`rounded-xl p-4 text-center ${change === 0 ? 'bg-green-50' : 'bg-amber-50'}`}>
                       <p className="text-xs text-stone-500 mb-1">找零</p>
@@ -383,7 +431,6 @@ export default function POSPage() {
                 </div>
               )}
 
-              {/* 按鈕 */}
               <div className="flex gap-3 pt-1">
                 <button
                   onClick={closeCheckout}
