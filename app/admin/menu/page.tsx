@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useAdminPwd } from '../admin-context'
 
 type MenuItem = {
   id: string
@@ -17,8 +16,12 @@ type MenuItem = {
 const EMPTY_FORM = { name: '', category: '', price: '', stock_qty: '', low_stock_alert: '5', sort_order: '0' }
 
 export default function AdminMenuPage() {
-  const password = useAdminPwd()
+  const [password, setPassword] = useState('')
   const [items, setItems] = useState<MenuItem[]>([])
+
+  useEffect(() => {
+    setPassword(sessionStorage.getItem('adminPwd') || '')
+  }, [])
   const [showAddForm, setShowAddForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)

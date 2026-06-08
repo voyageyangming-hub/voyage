@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useAdminPwd } from './admin-context'
 
 type Booking = {
   id: string
@@ -82,8 +81,12 @@ function SwipeCard({
 
 // ─── 主頁面 ───────────────────────────────
 export default function AdminPage() {
-  const password = useAdminPwd()
+  const [password, setPassword] = useState('')
   const [bookings, setBookings] = useState<Booking[]>([])
+
+  useEffect(() => {
+    setPassword(sessionStorage.getItem('adminPwd') || '')
+  }, [])
   const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'checked_in'>('all')
   const [search, setSearch] = useState('')
   const [confirming, setConfirming] = useState<string | null>(null)

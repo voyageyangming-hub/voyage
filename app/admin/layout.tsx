@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { AdminPwdContext } from './admin-context'
 
 const NAV_LINKS = [
   { href: '/admin', label: '預約管理' },
@@ -77,30 +76,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <AdminPwdContext.Provider value={password}>
-      <div className="min-h-screen bg-stone-50">
-        <header className="bg-white border-b border-stone-200 shadow-sm">
-          <div className="max-w-4xl mx-auto px-4 py-4">
-            <h1 className="text-lg font-semibold text-stone-800">Voyage 陽明山 管理後台</h1>
-          </div>
-        </header>
-        <nav className="flex gap-1 px-4 py-2 bg-stone-100 border-b border-stone-200 overflow-x-auto">
-          {NAV_LINKS.map(link => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                pathname === link.href
-                  ? 'bg-amber-700 text-white'
-                  : 'text-stone-600 hover:bg-stone-200'
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-        {children}
-      </div>
-    </AdminPwdContext.Provider>
+    <div className="min-h-screen bg-stone-50">
+      <header className="bg-white border-b border-stone-200 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <h1 className="text-lg font-semibold text-stone-800">Voyage 陽明山 管理後台</h1>
+        </div>
+      </header>
+      <nav className="flex gap-1 px-4 py-2 bg-stone-100 border-b border-stone-200 overflow-x-auto">
+        {NAV_LINKS.map(link => (
+          <Link
+            key={link.href}
+            href={link.href}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+              pathname === link.href
+                ? 'bg-amber-700 text-white'
+                : 'text-stone-600 hover:bg-stone-200'
+            }`}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+      {children}
+    </div>
   )
 }

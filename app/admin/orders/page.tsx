@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useAdminPwd } from '../admin-context'
 
 type OrderItem = {
   id: string
@@ -49,8 +48,12 @@ function getTaipeiToday() {
 }
 
 export default function AdminOrdersPage() {
-  const password = useAdminPwd()
+  const [password, setPassword] = useState('')
   const [orders, setOrders] = useState<Order[]>([])
+
+  useEffect(() => {
+    setPassword(sessionStorage.getItem('adminPwd') || '')
+  }, [])
   const [dateFilter, setDateFilter] = useState(getTaipeiToday())
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
