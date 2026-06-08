@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   if (!checkAuth(request)) return Response.json({ error: '未授權' }, { status: 401 })
 
-  const { name, category, price, stock_qty, low_stock_alert, sort_order } = await request.json()
+  const { name, category, price, stock_qty, low_stock_alert, sort_order, has_temperature } = await request.json()
 
   if (!name || !category || price === undefined) {
     return Response.json({ error: '請填寫名稱、分類與售價' }, { status: 400 })
@@ -39,6 +39,7 @@ export async function POST(request: Request) {
       stock_qty: stock_qty ?? -1,
       low_stock_alert: low_stock_alert ?? 5,
       sort_order: sort_order ?? 0,
+      has_temperature: has_temperature ?? false,
     })
     .select()
     .single()
