@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useLayoutEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { getAdminPwd, saveAdminPwd } from '@/lib/admin-auth'
+
+const PWD_HASH = 'f283c7cbb4dca604c8d93f82c717afab9a27d8ee02ce95a1fca14a2044de6ca6'
 
 const NAV_LINKS = [
   { href: '/admin', label: '預約管理' },
@@ -15,22 +17,25 @@ const NAV_LINKS = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [authed, setAuthed] = useState(false)
-  const [pwd, setPwd] = useState('')
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(false)
+  const pwdRef = useRef<HTMLInputElement>(null)
 
-  useLayoutEffect(() => {
-    if (getAdminPwd()) setAuthed(true)
+  useEffect(() => {
+    try {
+      if (getAdminPwd()) setAuthed(true)
+    } catch {}
   }, [])
 
   async function login() {
+    const pwd = pwdRef.current?.value ?? ''
     if (!pwd) { setError('請輸入密碼'); return }
-    setLoading(true)
+    setChecking(true)
     setError('')
     try {
       const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pwd))
       const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
-      if (hex === 'f283c7cbb4dca604c8d93f82c717afab9a27d8ee02ce95a1fca14a2044de6ca6') {
+      if (hex === PWD_HASH) {
         saveAdminPwd(pwd)
         setAuthed(true)
       } else {
@@ -39,7 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     } catch {
       setError('驗證失敗，請重試')
     } finally {
-      setLoading(false)
+      setChecking(false)
     }
   }
 
@@ -49,19 +54,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8 w-full max-w-sm">
           <h1 className="text-xl font-semibold text-stone-800 mb-6 text-center">管理後台</h1>
           <input
+            ref={pwdRef}
             type="password"
-            value={pwd}
-            onChange={e => setPwd(e.target.value)}
+            defaultValue=""
             placeholder="請輸入管理密碼"
             className="w-full border border-stone-300 rounded-lg px-3 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
           />
           {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
           <button
             onClick={login}
-            disabled={loading}
-            className="w-full bg-amber-700 text-white font-semibold py-3 rounded-lg text-base disabled:opacity-50"
+            className="w-full bg-amber-700 text-white font-semibold py-3 rounded-lg text-base"
           >
-            {loading ? '驗證中…' : '登入'}
+            {checking ? '驗證中…' : '登入'}
           </button>
         </div>
       </main>
