@@ -21,7 +21,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     const saved = localStorage.getItem('adminPwd')
-    if (saved) setAuthed(true)
+    if (saved) {
+      sessionStorage.setItem('adminPwd', saved)
+      setAuthed(true)
+    }
     setReady(true)
   }, [])
 
@@ -33,6 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       const r = await fetch('/api/admin/auth', { headers: { 'x-admin-password': pwd } })
       if (r.ok) {
         localStorage.setItem('adminPwd', pwd)
+        sessionStorage.setItem('adminPwd', pwd)
         setAuthed(true)
       } else {
         setError('密碼錯誤')
