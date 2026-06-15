@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (saved) {
       const controller = new AbortController()
       const timer = setTimeout(() => controller.abort(), 8000)
-      fetch('/api/admin/bookings', {
+      fetch('/api/admin/auth', {
         headers: { 'x-admin-password': saved },
         signal: controller.signal,
       })
@@ -43,7 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    const res = await fetch('/api/admin/bookings', {
+    const res = await fetch('/api/admin/auth', {
       headers: { 'x-admin-password': password },
     })
     if (res.ok) {
