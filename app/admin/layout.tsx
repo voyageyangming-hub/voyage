@@ -21,12 +21,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     const saved = sessionStorage.getItem('adminPwd')
     if (saved) {
-      fetch('/api/admin/bookings', { headers: { 'x-admin-password': saved } })
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 8000)
+      fetch('/api/admin/bookings', {
+        headers: { 'x-admin-password': saved },
+        signal: controller.signal,
+      })
         .then(res => {
+          clearTimeout(timer)
           if (res.ok) { setPassword(saved); setAuthed(true) }
           setChecking(false)
         })
-        .catch(() => setChecking(false))
+        .catch(() => {
+          clearTimeout(timer)
+          setChecking(false)
+        })
     } else {
       setChecking(false)
     }
