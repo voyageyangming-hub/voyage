@@ -15,25 +15,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname()
   const [password, setPassword] = useState('')
   const [authed, setAuthed] = useState(false)
-  const [checking, setChecking] = useState(true)
   const [loginError, setLoginError] = useState('')
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('reset') === '1') {
-      sessionStorage.removeItem('adminPwd')
-      window.location.replace('/admin')
-      return
-    }
     const saved = sessionStorage.getItem('adminPwd')
-    if (!saved) { setChecking(false); return }
-    const timer = setTimeout(() => setChecking(false), 5000)
+    if (!saved) return
     fetch('/api/admin/auth', { headers: { 'x-admin-password': saved } })
-      .then(res => {
-        clearTimeout(timer)
-        if (res.ok) { setPassword(saved); setAuthed(true) }
-        setChecking(false)
-      })
-      .catch(() => { clearTimeout(timer); setChecking(false) })
+      .then(res => { if (res.ok) { setPassword(saved); setAuthed(true) } })
+      .catch(() => {})
   }, [])
 
   async function handleLogin(e: React.FormEvent) {
@@ -48,14 +37,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     } else {
       setLoginError('密碼錯誤')
     }
-  }
-
-  if (checking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-stone-50">
-        <p className="text-stone-400 text-sm">驗證中…</p>
-      </div>
-    )
   }
 
   if (!authed) {
