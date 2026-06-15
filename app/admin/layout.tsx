@@ -28,15 +28,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     setLoading(true)
     setError('')
     try {
-      const r = await fetch('/api/admin/auth', { headers: { 'x-admin-password': pwd } })
-      if (r.ok) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pwd))
+      const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+      if (hex === 'f283c7cbb4dca604c8d93f82c717afab9a27d8ee02ce95a1fca14a2044de6ca6') {
         saveAdminPwd(pwd)
         setAuthed(true)
       } else {
         setError('密碼錯誤')
       }
     } catch {
-      setError('網路錯誤，請重試')
+      setError('驗證失敗，請重試')
     } finally {
       setLoading(false)
     }
