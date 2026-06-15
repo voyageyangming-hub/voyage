@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useLayoutEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
@@ -17,33 +17,35 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [authed, setAuthed] = useState(false)
   const [loginError, setLoginError] = useState('')
   const [showPwd, setShowPwd] = useState(false)
-  const [logging, setLogging] = useState(false)
 
-  useEffect(() => {
+  // Run synchronously before paint to avoid flash
+  useLayoutEffect(() => {
     const saved = sessionStorage.getItem('adminPwd')
     if (!saved) return
+    // Trust immediately, verify in background
+    setPassword(saved)
+    setAuthed(true)
     fetch('/api/admin/auth', { headers: { 'x-admin-password': saved } })
-      .then(res => { if (res.ok) { setPassword(saved); setAuthed(true) } })
+      .then(res => {
+        if (!res.ok) {
+          sessionStorage.removeItem('adminPwd')
+          setAuthed(false)
+          setPassword('')
+        }
+      })
       .catch(() => {})
   }, [])
 
   async function handleLogin() {
-    setLogging(true)
-    try {
-      const res = await fetch('/api/admin/auth', {
-        headers: { 'x-admin-password': password },
-      })
-      if (res.ok) {
-        sessionStorage.setItem('adminPwd', password)
-        setAuthed(true)
-        setLoginError('')
-      } else {
-        setLoginError(`密碼錯誤（已輸入：${password.length} 字元）`)
-      }
-    } catch {
-      setLoginError('網路錯誤，請重試')
-    } finally {
-      setLogging(false)
+    const res = await fetch('/api/admin/auth', {
+      headers: { 'x-admin-password': password },
+    }).catch(() => null)
+    if (res?.ok) {
+      sessionStorage.setItem('adminPwd', password)
+      setAuthed(true)
+      setLoginError('')
+    } else {
+      setLoginError(`密碼錯誤`)
     }
   }
 
@@ -62,19 +64,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               autoComplete="off"
               autoCapitalize="none"
               autoCorrect="off"
-              className="w-full border border-stone-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 pr-12"
+              className="w-full border border-stone-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 pr-16"
             />
             <button
               type="button"
               onClick={() => setShowPwd(v => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs px-1"
             >
               {showPwd ? '隱藏' : '顯示'}
             </button>
           </div>
           {loginError && <p className="text-red-600 text-sm mb-3">{loginError}</p>}
-          <button type="button" onClick={handleLogin} disabled={logging} className="w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-2.5 rounded-lg disabled:bg-stone-300">
-            {logging ? '驗證中…' : '登入'}
+          <button
+            type="button"
+            onClick={handleLogin}
+            className="w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-2.5 rounded-lg"
+          >
+            登入
           </button>
         </div>
       </main>
