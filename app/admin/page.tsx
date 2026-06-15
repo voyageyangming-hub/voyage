@@ -1,5 +1,6 @@
 'use client'
 
+import { getAdminPwd } from '@/lib/admin-auth'
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 type Booking = {
@@ -85,7 +86,7 @@ export default function AdminPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
 
   useEffect(() => {
-    setPassword(localStorage.getItem('adminPwd') || sessionStorage.getItem('adminPwd') || '')
+    setPassword(getAdminPwd())
   }, [])
   const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'checked_in'>('all')
   const [search, setSearch] = useState('')

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useLayoutEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
+import { getAdminPwd, saveAdminPwd } from '@/lib/admin-auth'
 
 const NAV_LINKS = [
   { href: '/admin', label: '預約管理' },
@@ -18,12 +19,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    const saved = localStorage.getItem('adminPwd')
-    if (saved) {
-      sessionStorage.setItem('adminPwd', saved)
-      setAuthed(true)
-    }
+  useLayoutEffect(() => {
+    if (getAdminPwd()) setAuthed(true)
   }, [])
 
   async function login() {
@@ -33,8 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     try {
       const r = await fetch('/api/admin/auth', { headers: { 'x-admin-password': pwd } })
       if (r.ok) {
-        localStorage.setItem('adminPwd', pwd)
-        sessionStorage.setItem('adminPwd', pwd)
+        saveAdminPwd(pwd)
         setAuthed(true)
       } else {
         setError('密碼錯誤')

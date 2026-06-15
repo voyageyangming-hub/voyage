@@ -1,5 +1,6 @@
 'use client'
 
+import { getAdminPwd } from '@/lib/admin-auth'
 import { useState, useEffect, useCallback } from 'react'
 
 type MenuItem = {
@@ -21,7 +22,7 @@ export default function AdminMenuPage() {
   const [items, setItems] = useState<MenuItem[]>([])
 
   useEffect(() => {
-    setPassword(localStorage.getItem('adminPwd') || sessionStorage.getItem('adminPwd') || '')
+    setPassword(getAdminPwd())
   }, [])
   const [showAddForm, setShowAddForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)

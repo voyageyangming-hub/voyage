@@ -1,5 +1,6 @@
 'use client'
 
+import { getAdminPwd } from '@/lib/admin-auth'
 import { useState, useEffect, useCallback } from 'react'
 
 type OrderItem = {
@@ -54,7 +55,7 @@ export default function AdminOrdersPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
   useEffect(() => {
-    setPassword(localStorage.getItem('adminPwd') || sessionStorage.getItem('adminPwd') || '')
+    setPassword(getAdminPwd())
   }, [])
   const [dateFilter, setDateFilter] = useState(getTaipeiToday())
   const [expandedId, setExpandedId] = useState<string | null>(null)
