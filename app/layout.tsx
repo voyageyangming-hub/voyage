@@ -8,13 +8,13 @@ export const metadata: Metadata = {
     title: 'Voyage 陽明山 — 線上預約',
     description: '預約 Voyage 陽明山園區入園',
   },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'Voyage 陽明山',
+  icons: {
+    apple: '/icon-180.png',
   },
   other: {
-    'apple-touch-icon': '/icon-180.png',
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'apple-mobile-web-app-title': 'Voyage 陽明山',
   },
 }
 

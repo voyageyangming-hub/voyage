@@ -16,6 +16,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [password, setPassword] = useState('')
   const [authed, setAuthed] = useState(false)
   const [loginError, setLoginError] = useState('')
+  const [showPwd, setShowPwd] = useState(false)
+  const [logging, setLogging] = useState(false)
 
   useEffect(() => {
     const saved = sessionStorage.getItem('adminPwd')
@@ -27,15 +29,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
-    const res = await fetch('/api/admin/auth', {
-      headers: { 'x-admin-password': password },
-    })
-    if (res.ok) {
-      sessionStorage.setItem('adminPwd', password)
-      setAuthed(true)
-      setLoginError('')
-    } else {
-      setLoginError('密碼錯誤')
+    setLogging(true)
+    try {
+      const res = await fetch('/api/admin/auth', {
+        headers: { 'x-admin-password': password },
+      })
+      if (res.ok) {
+        sessionStorage.setItem('adminPwd', password)
+        setAuthed(true)
+        setLoginError('')
+      } else {
+        setLoginError(`密碼錯誤（已輸入：${password.length} 字元）`)
+      }
+    } catch {
+      setLoginError('網路錯誤，請重試')
+    } finally {
+      setLogging(false)
     }
   }
 
@@ -44,16 +53,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="min-h-screen flex items-center justify-center bg-stone-50">
         <form onSubmit={handleLogin} className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8 w-full max-w-sm">
           <h1 className="text-xl font-semibold text-stone-800 mb-6 text-center">管理後台</h1>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="請輸入管理密碼"
-            className="w-full border border-stone-300 rounded-lg px-3 py-2.5 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500"
-          />
+          <div className="relative mb-3">
+            <input
+              type={showPwd ? 'text' : 'password'}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="請輸入管理密碼"
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              className="w-full border border-stone-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPwd(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs"
+            >
+              {showPwd ? '隱藏' : '顯示'}
+            </button>
+          </div>
           {loginError && <p className="text-red-600 text-sm mb-3">{loginError}</p>}
-          <button type="submit" className="w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-2.5 rounded-lg">
-            登入
+          <button type="submit" disabled={logging} className="w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-2.5 rounded-lg disabled:bg-stone-300">
+            {logging ? '驗證中…' : '登入'}
           </button>
         </form>
       </main>
