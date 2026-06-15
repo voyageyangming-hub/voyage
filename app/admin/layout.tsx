@@ -19,26 +19,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [loginError, setLoginError] = useState('')
 
   useEffect(() => {
-    const saved = sessionStorage.getItem('adminPwd')
-    if (saved) {
-      const controller = new AbortController()
-      const timer = setTimeout(() => controller.abort(), 8000)
-      fetch('/api/admin/auth', {
-        headers: { 'x-admin-password': saved },
-        signal: controller.signal,
-      })
-        .then(res => {
-          clearTimeout(timer)
-          if (res.ok) { setPassword(saved); setAuthed(true) }
-          setChecking(false)
-        })
-        .catch(() => {
-          clearTimeout(timer)
-          setChecking(false)
-        })
-    } else {
-      setChecking(false)
+    if (new URLSearchParams(window.location.search).get('reset') === '1') {
+      sessionStorage.removeItem('adminPwd')
+      window.location.replace('/admin')
+      return
     }
+    const saved = sessionStorage.getItem('adminPwd')
+    if (!saved) { setChecking(false); return }
+    const timer = setTimeout(() => setChecking(false), 5000)
+    fetch('/api/admin/auth', { headers: { 'x-admin-password': saved } })
+      .then(res => {
+        clearTimeout(timer)
+        if (res.ok) { setPassword(saved); setAuthed(true) }
+        setChecking(false)
+      })
+      .catch(() => { clearTimeout(timer); setChecking(false) })
   }, [])
 
   async function handleLogin(e: React.FormEvent) {
