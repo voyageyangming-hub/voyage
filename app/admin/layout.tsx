@@ -27,8 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .catch(() => {})
   }, [])
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleLogin() {
     setLogging(true)
     try {
       const res = await fetch('/api/admin/auth', {
@@ -51,13 +50,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!authed) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-stone-50">
-        <form onSubmit={handleLogin} className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8 w-full max-w-sm">
+        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8 w-full max-w-sm">
           <h1 className="text-xl font-semibold text-stone-800 mb-6 text-center">管理後台</h1>
           <div className="relative mb-3">
             <input
               type={showPwd ? 'text' : 'password'}
               value={password}
               onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleLogin()}
               placeholder="請輸入管理密碼"
               autoComplete="off"
               autoCapitalize="none"
@@ -73,10 +73,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
           </div>
           {loginError && <p className="text-red-600 text-sm mb-3">{loginError}</p>}
-          <button type="submit" disabled={logging} className="w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-2.5 rounded-lg disabled:bg-stone-300">
+          <button type="button" onClick={handleLogin} disabled={logging} className="w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold py-2.5 rounded-lg disabled:bg-stone-300">
             {logging ? '驗證中…' : '登入'}
           </button>
-        </form>
+        </div>
       </main>
     )
   }
