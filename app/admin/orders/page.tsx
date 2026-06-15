@@ -54,7 +54,7 @@ export default function AdminOrdersPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
   useEffect(() => {
-    setPassword(sessionStorage.getItem('adminPwd') || '')
+    setPassword(localStorage.getItem('adminPwd') || sessionStorage.getItem('adminPwd') || '')
   }, [])
   const [dateFilter, setDateFilter] = useState(getTaipeiToday())
   const [expandedId, setExpandedId] = useState<string | null>(null)

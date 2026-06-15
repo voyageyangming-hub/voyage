@@ -21,7 +21,7 @@ export default function AdminMenuPage() {
   const [items, setItems] = useState<MenuItem[]>([])
 
   useEffect(() => {
-    setPassword(sessionStorage.getItem('adminPwd') || '')
+    setPassword(localStorage.getItem('adminPwd') || sessionStorage.getItem('adminPwd') || '')
   }, [])
   const [showAddForm, setShowAddForm] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)

@@ -85,7 +85,7 @@ export default function AdminPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
 
   useEffect(() => {
-    setPassword(sessionStorage.getItem('adminPwd') || '')
+    setPassword(localStorage.getItem('adminPwd') || sessionStorage.getItem('adminPwd') || '')
   }, [])
   const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'checked_in'>('all')
   const [search, setSearch] = useState('')
