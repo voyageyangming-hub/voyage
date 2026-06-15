@@ -14,7 +14,6 @@ const NAV_LINKS = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [authed, setAuthed] = useState(false)
-  const [ready, setReady] = useState(false)
   const [pwd, setPwd] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -25,7 +24,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       sessionStorage.setItem('adminPwd', saved)
       setAuthed(true)
     }
-    setReady(true)
   }, [])
 
   async function login() {
@@ -47,8 +45,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setLoading(false)
     }
   }
-
-  if (!ready) return null
 
   if (!authed) {
     return (
